@@ -409,6 +409,8 @@ function updateOrderTotal(){
   document.getElementById('deliveryCharge').textContent='Rs. '+DELIVERY_CHARGE.toLocaleString();
   document.getElementById('thankTotal').textContent=total.toLocaleString();
 }
+const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwTcY4GlIhu10ufnOZrs7UGstLxIcXNNCuCUSF5cfQulgLviC782Um-AzVx94wv6EnW/exec'; // Deployed Google Apps Script Web App URL
+
 async function startOrderProcess(e){
   e.preventDefault();
 
@@ -432,6 +434,7 @@ async function startOrderProcess(e){
   const datePart=stamp.getFullYear().toString()+String(stamp.getMonth()+1).padStart(2,'0')+String(stamp.getDate()).padStart(2,'0');
   const orderNumber='WS-'+datePart+'-'+Math.floor(1000+Math.random()*9000);
 
+  customer.orderNumber = orderNumber;
   document.getElementById('thankOrderNumber').textContent=orderNumber;
   document.getElementById('thankName').textContent=customer.name;
   document.getElementById('thankPhone').textContent=customer.phone;
@@ -441,7 +444,30 @@ async function startOrderProcess(e){
   document.getElementById('thankQty').textContent=customer.qty;
   document.getElementById('thankTotal').textContent=customer.total.toLocaleString();
 
-document.getElementById('orderCard').style.display='none';
+  const submitButton = form.querySelector('button[type="submit"]');
+  if (!SHEETS_WEB_APP_URL || SHEETS_WEB_APP_URL.indexOf('PASTE_YOUR_') === 0) {
+    alert('Google Sheets abhi connect nahi hai. HTML mein SHEETS_WEB_APP_URL set karein.');
+    return;
+  }
+  submitButton.disabled = true;
+  submitButton.textContent = 'SUBMITTING ORDER...';
+  try {
+    await fetch(SHEETS_WEB_APP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'},
+      body: new URLSearchParams({payload: JSON.stringify(customer)}).toString()
+    });
+  } catch (err) {
+    alert('Order submit karte waqt connection issue aya. Please dobara try karein.');
+    submitButton.disabled = false;
+    submitButton.textContent = 'PLACE ORDER';
+    return;
+  }
+  submitButton.disabled = false;
+  submitButton.textContent = 'PLACE ORDER';
+
+  document.getElementById('orderCard').style.display='none';
   document.getElementById('processCard').style.display='block';
   document.getElementById('thankCard').style.display='none';
 
