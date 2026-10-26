@@ -433,10 +433,32 @@ images.forEach((s,n)=>{let x=document.createElement('img');x.src=s;x.onclick=()=
 function show(n){i=(n+images.length)%images.length;main.src=images[i];[...thumbs.children].forEach((x,n)=>x.classList.toggle('active',n===i))}
 function prev(){show(i-1)}function next(){show(i+1)}function zoom(){main.style.transform=main.style.transform==='scale(1.25)'?'scale(1)':'scale(1.25)'}show(0);
 
+// Track product detail view when the product page loads.
+if (window.ttq && typeof window.ttq.track === 'function') {
+  window.ttq.track('ViewContent', {
+    contents: [{content_id: 'waist-shaper', content_name: 'Waist Shaper', content_type: 'product', quantity: 1}],
+    content_type: 'product',
+    content_name: 'Waist Shaper',
+    value: 1499,
+    currency: 'PKR'
+  });
+}
+
 let orderQuantity = 1;
 const PRODUCT_PRICE = 1499;
 const DELIVERY_CHARGE = 200;
 function openOrder(){
+  // This page has a direct Buy It Now flow (no separate cart), so track checkout start here.
+  if (!window.__waistshaperCheckoutStarted) {
+    window.__waistshaperCheckoutStarted = true;
+    if (window.ttq && typeof window.ttq.track === 'function') {
+      window.ttq.track('InitiateCheckout', {
+        contents: [{content_id: 'waist-shaper', content_name: 'Waist Shaper', content_type: 'product', quantity: orderQuantity}],
+        value: PRODUCT_PRICE * orderQuantity + DELIVERY_CHARGE,
+        currency: 'PKR'
+      });
+    }
+  }
   document.getElementById('orderOverlay').classList.add('show');
   document.getElementById('orderCard').style.display='block';
   document.getElementById('processCard').style.display='none';
